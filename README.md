@@ -1,6 +1,6 @@
 # DFTEpicircle Drawer
 
-![]()
+![](https://raw.githubusercontent.com/AMAIOLAMO/C-DFTEpicircles/main/examples/showcase_cute_cat.gif)
 
 this is a simple discrete fourier transform implementation of using epicircles to draw points
 
