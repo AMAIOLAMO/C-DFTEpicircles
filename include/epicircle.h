@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EPICIRCLES_H
+#define EPICIRCLES_H
 
 #include <stdio.h>
 #include <raylib.h>
@@ -18,3 +19,5 @@ struct Vector2 GetEndPointOfEpicircles(Epicircle *epicircles, float time, size_t
 // drawing
 Vector2 DrawEpicircle(Epicircle epicircle, Vector2 origin, float time, Color color, float angleOffset);
 Vector2 DrawEpicircles(Epicircle *epicircles, Vector2 origin, float time, Color color, size_t size, float angleOffset);
+
+#endif // EPICIRCLES_H

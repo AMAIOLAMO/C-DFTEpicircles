@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <raylib.h>
+#include <raymath.h>
+
+int Max(int a, int b) {
+  if(a > b) {
+    return a;
+  }
+
+  return b;
+}
+
+void DrawCornerDimensions(Vector2 topLeft, Vector2 bottomRight) {
+  DrawLineV(topLeft, Vector2Add(topLeft, (Vector2){50.0f, 0.0f}), GREEN);
+  DrawLineV(topLeft, Vector2Add(topLeft, (Vector2){0.0f, 50.0f}), GREEN);
+
+  DrawLineV(bottomRight, Vector2Add(bottomRight, (Vector2){-50.0f, 0.0f}), GREEN);
+  DrawLineV(bottomRight, Vector2Add(bottomRight, (Vector2){0.0f, -50.0f}), GREEN);
+}
+
+void DrawLineStripFromPoints(Vector2 *points, Vector2 offset, float scale, size_t size) {
+  for (int i = 0; i < size - 1; i++) {
+    Vector2 scaledStartPoint = Vector2Scale(points[i], scale);
+    Vector2 scaledEndPoint = Vector2Scale(points[i + 1], scale);
+
+    Vector2 startPoint = Vector2Add(scaledStartPoint, offset);
+    Vector2 endPoint = Vector2Add(scaledEndPoint, offset);
+
+    const float percentage = (float)i / (float)size;
+
+    const Color test =
+      ColorFromHSV(percentage * 255.0f, 1.0f, 1.0f - percentage);
+
+    DrawLineEx(startPoint, endPoint, 3.0f, test);
+  }
+}
