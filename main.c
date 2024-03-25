@@ -38,14 +38,14 @@ void UpdateCameraMovement(Camera2D *camera, float baseCameraSpeed) {
   }
 }
 
-void UpdateCameraZoom(Camera2D *camera, float zoomIncreaseFactor, float zoomDecreaseFactor) {
-  if(IsKeyPressed(KEY_EQUAL)) {
+void UpdateCameraZoom(Camera2D *camera, float zoomIncreaseFactor,
+                      float zoomDecreaseFactor) {
+  if (IsKeyPressed(KEY_EQUAL)) {
     camera->zoom += zoomIncreaseFactor;
   }
-  if(IsKeyPressed(KEY_MINUS)) {
+  if (IsKeyPressed(KEY_MINUS)) {
     camera->zoom = Maxf(camera->zoom - zoomDecreaseFactor, 0.1f);
   }
-
 }
 
 void DrawGrid2D(int gridSize, int tileSize, Color color) {
@@ -142,7 +142,7 @@ int main(void) {
   InitWindow(1000, 900, "Discrete Fourier Transform");
   SetTargetFPS(120);
 
-  const char *FILE_NAME = "sampled_svgs/cute_cats.pt";
+  const char *FILE_NAME = "sampled_svgs/love_text.pt";
 
   Vector2 maxDrawDimension;
 
@@ -183,7 +183,7 @@ int main(void) {
 
   bool displayFps = true;
 
-  Vector2 drawingOffset = Vector2Zero();
+  Vector2 drawingOrigin = Vector2Zero();
 
   float drawingScale = 1.0f;
 
@@ -222,43 +222,61 @@ int main(void) {
       Vector2 halfScaledMaxDimension =
           Vector2Scale(scaledMaxDrawDimension, 0.5f);
 
-      Vector2 topLeft = Vector2Subtract(drawingOffset, halfScaledMaxDimension);
-      Vector2 bottomRight = Vector2Add(halfScaledMaxDimension, drawingOffset);
+      Vector2 topLeft = Vector2Subtract(drawingOrigin, halfScaledMaxDimension);
+      Vector2 bottomRight = Vector2Add(halfScaledMaxDimension, drawingOrigin);
 
       DrawCornerDimensions(topLeft, bottomRight);
 
       {
-        // draw left epicircles which draws the Y axis of the drawing
-        {
-          Vector2 yOrigin = Vector2Zero();
-
-          Vector2 yEpicirclesEndPoint = DrawEpicircles(
-              yEpicircles, yOrigin, time, GRAY, valuesLength, PI / 2);
-
-          // draws end point
-          DrawCircleV(yEpicirclesEndPoint, 5.0f, GREEN);
-        }
-
-        // draws top epicircles which draws the X axis of the drawing
-        {
-          Vector2 xOrigin = Vector2Zero();
-
-          Vector2 xEpicirclesEndPoint = DrawEpicircles(
-              xEpicircles, xOrigin, time, GRAY, valuesLength, 0);
-
-          // draws end point
-          DrawCircleV(xEpicirclesEndPoint, 5.0f, GREEN);
-        }
-
         Vector2 xEndPoint =
-            GetEndPointOfEpicircles(xEpicircles, time, valuesLength);
+            EpicirclesEndPoint(xEpicircles, time, valuesLength);
 
         float xRealPart = xEndPoint.x;
 
         Vector2 yEndPoint =
-            GetEndPointOfEpicircles(yEpicircles, time, valuesLength);
+            EpicirclesEndPoint(yEpicircles, time, valuesLength);
 
         float yRealPart = yEndPoint.x;
+
+        Vector2 resultVectorPoint = Vector2Subtract((Vector2){xRealPart, yRealPart}, halfScaledMaxDimension);
+        resultVectorPoint = Vector2Add(drawingOrigin, resultVectorPoint);
+
+        DrawLineV(drawingOrigin, resultVectorPoint, YELLOW);
+
+
+        // draw left epicircles which draws the Y axis of the drawing
+        {
+          Vector2 leftEpicircleOrigin = topLeft;
+          leftEpicircleOrigin = Vector2Subtract(leftEpicircleOrigin, (Vector2){100.0f, 0.0f});
+
+          Vector2 yEpicirclesEndPoint = DrawEpicircles(
+              yEpicircles, leftEpicircleOrigin, time, GRAY, valuesLength, PI / 2);
+
+          // draw center
+          DrawCircleLinesV(leftEpicircleOrigin, 5.0f, RED);
+
+          // draws end point
+          DrawCircleV(yEpicirclesEndPoint, 5.0f, GREEN);
+
+          DrawLineV(yEpicirclesEndPoint, resultVectorPoint, GRAY);
+        }
+
+        // draws top epicircles which draws the X axis of the drawing
+        {
+          Vector2 topEpicircleOrigin = topLeft;
+          topEpicircleOrigin = Vector2Subtract(topEpicircleOrigin, (Vector2){0.0f, 100.0f});
+
+          Vector2 xEpicirclesEndPoint =
+              DrawEpicircles(xEpicircles, topEpicircleOrigin, time, GRAY, valuesLength, 0);
+
+          // draw center
+          DrawCircleLinesV(topEpicircleOrigin, 5.0f, RED);
+
+          // draws end point
+          DrawCircleV(xEpicirclesEndPoint, 5.0f, GREEN);
+
+          DrawLineV(xEpicirclesEndPoint, resultVectorPoint, GRAY);
+        }
 
         // shifts array elements to the right and appends element at the start
         size_t numberOfBytesToCopy =
@@ -290,12 +308,12 @@ int main(void) {
 
     {
       Rectangle rect = {0, 0, 300, 20};
-      GuiSlider(rect, "", "offset x", &drawingOffset.x, 0, GetScreenWidth());
+      GuiSlider(rect, "", "origin x", &drawingOrigin.x, -GetScreenWidth(), GetScreenWidth());
     }
 
     {
       Rectangle rect = {0, 30, 300, 20};
-      GuiSlider(rect, "", "offset y", &drawingOffset.y, 0, GetScreenHeight());
+      GuiSlider(rect, "", "origin y", &drawingOrigin.y, -GetScreenHeight(), GetScreenHeight());
     }
 
     {

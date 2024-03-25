@@ -11,7 +11,7 @@ Epicircle CreateEpicircle(float freq, float amp, float phase) {
   return (Epicircle){freq, amp, phase};
 }
 
-Vector2 GetEndPointOfEpicircle(Epicircle epicircle, float time) {
+Vector2 EpicircleEndPoint(Epicircle epicircle, float time) {
   float freq = epicircle.freq;
   float amp = epicircle.amp;
   float phase = epicircle.phase;
@@ -21,12 +21,12 @@ Vector2 GetEndPointOfEpicircle(Epicircle epicircle, float time) {
   return GetVectorRotated(amp, angle);
 }
 
-Vector2 GetEndPointOfEpicircles(Epicircle *epicircles, float time,
+Vector2 EpicirclesEndPoint(Epicircle *epicircles, float time,
                                 size_t size) {
   Vector2 endPoint = {0};
 
   for (int i = 0; i < size; i++) {
-    Vector2 endPointOffset = GetEndPointOfEpicircle(epicircles[i], time);
+    Vector2 endPointOffset = EpicircleEndPoint(epicircles[i], time);
     endPoint = Vector2Add(endPoint, endPointOffset);
   }
 
