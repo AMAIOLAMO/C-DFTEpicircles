@@ -2,7 +2,15 @@
 #include <raylib.h>
 #include <raymath.h>
 
-int Max(int a, int b) {
+int MaxI(int a, int b) {
+  if(a > b) {
+    return a;
+  }
+
+  return b;
+}
+
+float Maxf(float a, float b) {
   if(a > b) {
     return a;
   }

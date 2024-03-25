@@ -9,48 +9,82 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "include/utilities.h"
 #include "include/epicircle.h"
 #include "include/raygui.h"
+#include "include/utilities.h"
 
 #include "include/fouriers.h"
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
 
-void DrawGrid2D(int gridSize, int tileSize, Color color)
-{
-    const int tile_size = 50;
-    for (int i = -gridSize; i < gridSize; i ++)
-    {
-        DrawLineEx((Vector2){gridSize * tileSize, tileSize*i}, (Vector2){-gridSize * tileSize, tileSize*i}, 1, color);
+void UpdateCameraMovement(Camera2D *camera, float baseCameraSpeed) {
+  float finalCameraSpeed = baseCameraSpeed;
 
-        DrawLineEx((Vector2){tileSize*i, gridSize * tileSize}, (Vector2){tileSize*i, -gridSize * tileSize}, 1, color);
-    }
+  if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
+    finalCameraSpeed *= 2.0f;
+  }
+
+  if (IsKeyDown(KEY_W)) {
+    camera->target.y -= finalCameraSpeed * GetFrameTime();
+  }
+  if (IsKeyDown(KEY_S)) {
+    camera->target.y += finalCameraSpeed * GetFrameTime();
+  }
+  if (IsKeyDown(KEY_A)) {
+    camera->target.x -= finalCameraSpeed * GetFrameTime();
+  }
+  if (IsKeyDown(KEY_D)) {
+    camera->target.x += finalCameraSpeed * GetFrameTime();
+  }
 }
 
-void DrawAxis(int gridSize, int tileSize, Color color){
-    DrawLineEx((Vector2){gridSize * tileSize, 0}, (Vector2){-gridSize * tileSize, 0}, 2, color);
-    DrawLineEx((Vector2){0, gridSize * tileSize}, (Vector2){0, -gridSize * tileSize}, 2, color);
-    for (int i = -gridSize; i < gridSize; i ++)
-    {
-        DrawText(TextFormat("%d", i * tileSize), i * tileSize + 5, 5, 5, color);
-        DrawText(TextFormat("%d", i * tileSize),5,  i * tileSize + 5, 5, color);
-    }
+void UpdateCameraZoom(Camera2D *camera, float zoomIncreaseFactor, float zoomDecreaseFactor) {
+  if(IsKeyPressed(KEY_EQUAL)) {
+    camera->zoom += zoomIncreaseFactor;
+  }
+  if(IsKeyPressed(KEY_MINUS)) {
+    camera->zoom = Maxf(camera->zoom - zoomDecreaseFactor, 0.1f);
+  }
+
 }
 
-// reads until found a delimiter of , or \n, and stops at the index where the delimiter is found
-// which means you need to manually increment the read ptr in order to read the next
-bool ReadNextFloat(char *text, int *textReadPtr, float *resultPtr, size_t textLength) {
-  if(*textReadPtr >= textLength)
+void DrawGrid2D(int gridSize, int tileSize, Color color) {
+  const int tile_size = 50;
+  for (int i = -gridSize; i < gridSize; i++) {
+    DrawLineEx((Vector2){gridSize * tileSize, tileSize * i},
+               (Vector2){-gridSize * tileSize, tileSize * i}, 1, color);
+
+    DrawLineEx((Vector2){tileSize * i, gridSize * tileSize},
+               (Vector2){tileSize * i, -gridSize * tileSize}, 1, color);
+  }
+}
+
+void DrawAxis(int gridSize, int tileSize, Color color) {
+  DrawLineEx((Vector2){gridSize * tileSize, 0},
+             (Vector2){-gridSize * tileSize, 0}, 2, color);
+  DrawLineEx((Vector2){0, gridSize * tileSize},
+             (Vector2){0, -gridSize * tileSize}, 2, color);
+  for (int i = -gridSize; i < gridSize; i++) {
+    DrawText(TextFormat("%d", i * tileSize), i * tileSize + 5, 5, 5, color);
+    DrawText(TextFormat("%d", i * tileSize), 5, i * tileSize + 5, 5, color);
+  }
+}
+
+// reads until found a delimiter of , or \n, and stops at the index where the
+// delimiter is found which means you need to manually increment the read ptr in
+// order to read the next
+bool ReadNextFloat(char *text, int *textReadPtr, float *resultPtr,
+                   size_t textLength) {
+  if (*textReadPtr >= textLength)
     return false;
 
-  if(text[*textReadPtr] == ',' || text[*textReadPtr] == '\n')
+  if (text[*textReadPtr] == ',' || text[*textReadPtr] == '\n')
     return false;
 
   char readBuffer[100] = {};
   int readBufferWriteIndex = 0;
 
-  while(*textReadPtr < textLength) {
+  while (*textReadPtr < textLength) {
     char character = text[*textReadPtr];
 
     if (character == ',' || character == '\n') {
@@ -72,7 +106,8 @@ bool ReadNextFloat(char *text, int *textReadPtr, float *resultPtr, size_t textLe
   return false;
 }
 
-int LoadDiscreteValuesFromFile(const char *fileName, Vector2 **discreteValuesPtr) {
+int LoadDiscreteValuesFromFile(const char *fileName,
+                               Vector2 **discreteValuesPtr) {
   char *fileText = LoadFileText(fileName);
 
   int fileLength = GetFileLength(fileName);
@@ -80,9 +115,9 @@ int LoadDiscreteValuesFromFile(const char *fileName, Vector2 **discreteValuesPtr
   int textReadIndex = 0;
   int valuesLength = 0;
 
-  *discreteValuesPtr = (Vector2*)malloc(2000 * sizeof(Vector2));
+  *discreteValuesPtr = (Vector2 *)malloc(2000 * sizeof(Vector2));
 
-  while(textReadIndex < fileLength && valuesLength <= 2000) {
+  while (textReadIndex < fileLength && valuesLength <= 2000) {
     Vector2 discreteValue = {};
 
     ReadNextFloat(fileText, &textReadIndex, &discreteValue.x, fileLength);
@@ -91,7 +126,8 @@ int LoadDiscreteValuesFromFile(const char *fileName, Vector2 **discreteValuesPtr
     ReadNextFloat(fileText, &textReadIndex, &discreteValue.y, fileLength);
     textReadIndex += 1;
 
-    (*discreteValuesPtr)[Max(valuesLength - 1, 0)] = discreteValue;
+    // append to the end of the array
+    (*discreteValuesPtr)[MaxI(valuesLength - 1, 0)] = discreteValue;
     valuesLength += 1;
   }
 
@@ -100,10 +136,7 @@ int LoadDiscreteValuesFromFile(const char *fileName, Vector2 **discreteValuesPtr
   return valuesLength;
 }
 
-void UnloadDiscreteValues(Vector2 *discreteValues) {
-  free(discreteValues);
-}
-
+void UnloadDiscreteValues(Vector2 *discreteValues) { free(discreteValues); }
 
 int main(void) {
   InitWindow(1000, 900, "Discrete Fourier Transform");
@@ -116,18 +149,22 @@ int main(void) {
   Vector2 *discreteValues;
   int valuesLength = LoadDiscreteValuesFromFile(FILE_NAME, &discreteValues);
 
-  printf("[Discrete value loader] loaded from file: %s, of total %d discrete values\n", FILE_NAME, valuesLength);
+  printf("[Discrete value loader] loaded from file: %s, of total %d discrete "
+         "values\n",
+         FILE_NAME, valuesLength);
 
   for (size_t i = 0; i < valuesLength; i++) {
     Vector2 value = discreteValues[i];
-    
+
     maxDrawDimension = Vector2Max(maxDrawDimension, value);
   }
 
   printf("max dimension: <%f, %f>\n", maxDrawDimension.x, maxDrawDimension.y);
 
-  Epicircle *xEpicircles = (Epicircle*)malloc(valuesLength * sizeof(Epicircle));
-  Epicircle *yEpicircles = (Epicircle*)malloc(valuesLength * sizeof(Epicircle));
+  Epicircle *xEpicircles =
+      (Epicircle *)malloc(valuesLength * sizeof(Epicircle));
+  Epicircle *yEpicircles =
+      (Epicircle *)malloc(valuesLength * sizeof(Epicircle));
 
   DFourierTransform2D(discreteValues, xEpicircles, yEpicircles, valuesLength);
 
@@ -146,11 +183,19 @@ int main(void) {
 
   bool displayFps = true;
 
-  Vector2 drawingOffset = {GetScreenWidth() * .5f, GetScreenWidth() * .5f};
+  Vector2 drawingOffset = Vector2Zero();
 
   float drawingScale = 1.0f;
 
   float ignoreDistanceThreshold = 200.0f;
+
+  Camera2D camera;
+  camera.offset = (Vector2){GetScreenWidth() * .5f, GetScreenWidth() * .5f};
+  camera.target = Vector2Zero();
+  camera.rotation = 0;
+  camera.zoom = 1.0f;
+
+  float baseCameraSpeed = 300.0f;
 
   while (!WindowShouldClose()) {
     BeginDrawing();
@@ -158,9 +203,13 @@ int main(void) {
     {
       ClearBackground(BLACK);
 
+      UpdateCameraMovement(&camera, baseCameraSpeed);
+      UpdateCameraZoom(&camera, 0.3f, 0.3f);
+
+      BeginMode2D(camera);
+
       DrawGrid2D(100, 50, ColorFromHSV(0.0f, 0.0f, 0.2f));
       DrawAxis(100, 50, ColorFromHSV(50, 0.5f, 1.0f));
-
 
       // uses totalFrames due to the floating point error that exists after
       // running a few minutes, which distorts the epicircles
@@ -168,8 +217,10 @@ int main(void) {
       // time += (2.0f * PI) / size;
       totalFrames += 1;
 
-      Vector2 scaledMaxDrawDimension = Vector2Scale(maxDrawDimension, drawingScale);
-      Vector2 halfScaledMaxDimension = Vector2Scale(scaledMaxDrawDimension, 0.5f);
+      Vector2 scaledMaxDrawDimension =
+          Vector2Scale(maxDrawDimension, drawingScale);
+      Vector2 halfScaledMaxDimension =
+          Vector2Scale(scaledMaxDrawDimension, 0.5f);
 
       Vector2 topLeft = Vector2Subtract(drawingOffset, halfScaledMaxDimension);
       Vector2 bottomRight = Vector2Add(halfScaledMaxDimension, drawingOffset);
@@ -177,13 +228,12 @@ int main(void) {
       DrawCornerDimensions(topLeft, bottomRight);
 
       {
-        // draw left epicircles which draws the X axis of the drawing
+        // draw left epicircles which draws the Y axis of the drawing
         {
-          Vector2 yOrigin = {GetScreenWidth() * .5f - 200.0f,
-                             GetScreenHeight() * .5f};
+          Vector2 yOrigin = Vector2Zero();
 
-          Vector2 yEpicirclesEndPoint =
-              DrawEpicircles(yEpicircles, yOrigin, time, WHITE, valuesLength, PI / 2);
+          Vector2 yEpicirclesEndPoint = DrawEpicircles(
+              yEpicircles, yOrigin, time, GRAY, valuesLength, PI / 2);
 
           // draws end point
           DrawCircleV(yEpicirclesEndPoint, 5.0f, GREEN);
@@ -191,28 +241,31 @@ int main(void) {
 
         // draws top epicircles which draws the X axis of the drawing
         {
-          Vector2 xOrigin = {GetScreenWidth() * .5f,
-                             GetScreenHeight() * .5f - 200.0f};
+          Vector2 xOrigin = Vector2Zero();
 
-          Vector2 xEpicirclesEndPoint =
-              DrawEpicircles(xEpicircles, xOrigin, time, WHITE, valuesLength, 0);
+          Vector2 xEpicirclesEndPoint = DrawEpicircles(
+              xEpicircles, xOrigin, time, GRAY, valuesLength, 0);
 
           // draws end point
           DrawCircleV(xEpicirclesEndPoint, 5.0f, GREEN);
         }
 
-        Vector2 xEndPoint = GetEndPointOfEpicircles(xEpicircles, time, valuesLength);
+        Vector2 xEndPoint =
+            GetEndPointOfEpicircles(xEpicircles, time, valuesLength);
 
         float xRealPart = xEndPoint.x;
 
-        Vector2 yEndPoint = GetEndPointOfEpicircles(yEpicircles, time, valuesLength);
+        Vector2 yEndPoint =
+            GetEndPointOfEpicircles(yEpicircles, time, valuesLength);
 
         float yRealPart = yEndPoint.x;
 
         // shifts array elements to the right and appends element at the start
-        size_t numberOfBytesToCopy = (pointsAbsoluteLength - 1) * sizeof(displayPointBuffer[0]);
+        size_t numberOfBytesToCopy =
+            (pointsAbsoluteLength - 1) * sizeof(displayPointBuffer[0]);
 
-        memmove(&displayPointBuffer[1], &displayPointBuffer[0], numberOfBytesToCopy);
+        memmove(&displayPointBuffer[1], &displayPointBuffer[0],
+                numberOfBytesToCopy);
 
         displayPointBuffer[0] = (Vector2){xRealPart, yRealPart};
 
@@ -222,10 +275,15 @@ int main(void) {
 
       // we could potentially optimize using an image
       // live display while drawing the image
-      DrawLineStripFromPoints(displayPointBuffer, topLeft, drawingScale, ignoreDistanceThreshold, currentPointsLength);
-
-      DrawText(TextFormat("index: %d", currentPointsLength), 0, 110, 20, WHITE);
+      DrawLineStripFromPoints(displayPointBuffer, topLeft, drawingScale,
+                              ignoreDistanceThreshold, currentPointsLength);
     }
+
+    EndMode2D();
+
+    DrawText(TextFormat("index: %d", currentPointsLength), 0, 110, 20, WHITE);
+
+    // UI related stuff
 
     if (displayFps)
       DrawFPS(GetScreenWidth() - 100, 0);
@@ -247,7 +305,8 @@ int main(void) {
 
     {
       Rectangle rect = {0, 90, 300, 20};
-      GuiSlider(rect, "", "ignore Distance Threshold", &ignoreDistanceThreshold, 0, 500);
+      GuiSlider(rect, "", "ignore Distance Threshold", &ignoreDistanceThreshold,
+                0, 500);
     }
 
     EndDrawing();
