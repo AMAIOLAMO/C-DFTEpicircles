@@ -17,6 +17,27 @@
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
 
+void DrawGrid2D(int gridSize, int tileSize, Color color)
+{
+    const int tile_size = 50;
+    for (int i = -gridSize; i < gridSize; i ++)
+    {
+        DrawLineEx((Vector2){gridSize * tileSize, tileSize*i}, (Vector2){-gridSize * tileSize, tileSize*i}, 1, color);
+
+        DrawLineEx((Vector2){tileSize*i, gridSize * tileSize}, (Vector2){tileSize*i, -gridSize * tileSize}, 1, color);
+    }
+}
+
+void DrawAxis(int gridSize, int tileSize, Color color){
+    DrawLineEx((Vector2){gridSize * tileSize, 0}, (Vector2){-gridSize * tileSize, 0}, 2, color);
+    DrawLineEx((Vector2){0, gridSize * tileSize}, (Vector2){0, -gridSize * tileSize}, 2, color);
+    for (int i = -gridSize; i < gridSize; i ++)
+    {
+        DrawText(TextFormat("%d", i * tileSize), i * tileSize + 5, 5, 5, color);
+        DrawText(TextFormat("%d", i * tileSize),5,  i * tileSize + 5, 5, color);
+    }
+}
+
 // reads until found a delimiter of , or \n, and stops at the index where the delimiter is found
 // which means you need to manually increment the read ptr in order to read the next
 bool ReadNextFloat(char *text, int *textReadPtr, float *resultPtr, size_t textLength) {
@@ -129,11 +150,16 @@ int main(void) {
 
   float drawingScale = 1.0f;
 
+  float ignoreDistanceThreshold = 200.0f;
+
   while (!WindowShouldClose()) {
     BeginDrawing();
 
     {
       ClearBackground(BLACK);
+
+      DrawGrid2D(100, 50, ColorFromHSV(0.0f, 0.0f, 0.2f));
+      DrawAxis(100, 50, ColorFromHSV(50, 0.5f, 1.0f));
 
 
       // uses totalFrames due to the floating point error that exists after
@@ -196,12 +222,9 @@ int main(void) {
 
       // we could potentially optimize using an image
       // live display while drawing the image
-      DrawLineStripFromPoints(displayPointBuffer, topLeft, drawingScale, currentPointsLength);
+      DrawLineStripFromPoints(displayPointBuffer, topLeft, drawingScale, ignoreDistanceThreshold, currentPointsLength);
 
-      char content[100] = {0};
-
-      sprintf(content, "index: %d", currentPointsLength);
-      DrawText(content, 0, 100, 20, WHITE);
+      DrawText(TextFormat("index: %d", currentPointsLength), 0, 110, 20, WHITE);
     }
 
     if (displayFps)
@@ -222,10 +245,16 @@ int main(void) {
       GuiSlider(rect, "", "scale", &drawingScale, 0, 10);
     }
 
+    {
+      Rectangle rect = {0, 90, 300, 20};
+      GuiSlider(rect, "", "ignore Distance Threshold", &ignoreDistanceThreshold, 0, 500);
+    }
+
     EndDrawing();
   }
 
   UnloadDiscreteValues(discreteValues);
+
   free(xEpicircles);
   free(yEpicircles);
   return 0;

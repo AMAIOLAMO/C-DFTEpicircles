@@ -18,8 +18,11 @@ void DrawCornerDimensions(Vector2 topLeft, Vector2 bottomRight) {
   DrawLineV(bottomRight, Vector2Add(bottomRight, (Vector2){0.0f, -50.0f}), GREEN);
 }
 
-void DrawLineStripFromPoints(Vector2 *points, Vector2 offset, float scale, size_t size) {
+void DrawLineStripFromPoints(Vector2 *points, Vector2 offset, float scale, float ignoreDistanceThreshold, size_t size) {
   for (int i = 0; i < size - 1; i++) {
+    if(Vector2DistanceSqr(points[i], points[i + 1]) > ignoreDistanceThreshold * ignoreDistanceThreshold)
+      continue;
+
     Vector2 scaledStartPoint = Vector2Scale(points[i], scale);
     Vector2 scaledEndPoint = Vector2Scale(points[i + 1], scale);
 
@@ -28,9 +31,9 @@ void DrawLineStripFromPoints(Vector2 *points, Vector2 offset, float scale, size_
 
     const float percentage = (float)i / (float)size;
 
-    const Color test =
-      ColorFromHSV(percentage * 255.0f, 1.0f, 1.0f - percentage);
+    const Color color =
+      ColorFromHSV(percentage * 255.0f, 1.0f, 1.0f);
 
-    DrawLineEx(startPoint, endPoint, 3.0f, test);
+    DrawLineEx(startPoint, endPoint, 3.0f, color);
   }
 }
