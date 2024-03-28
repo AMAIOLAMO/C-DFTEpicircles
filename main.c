@@ -89,7 +89,7 @@ bool ReadNextFloat(char *text, int *textReadPtr, float *resultPtr,
 
     if (character == ',' || character == '\n') {
 
-      // add terminating character so it doesnt read too long
+      // add terminating character so it doesnt overflow while reading
       readBuffer[readBufferWriteIndex] = '\0';
 
       *resultPtr = TextToFloat(&readBuffer[0]);
@@ -138,11 +138,16 @@ int LoadDiscreteValuesFromFile(const char *fileName,
 
 void UnloadDiscreteValues(Vector2 *discreteValues) { free(discreteValues); }
 
+// Vector2 CenterPoint(Vector2 point, Vector2 offset, Vector2 size) {
+//   const Vector2 halfSize = Vector2Scale(size, 0.5f);
+//   return Vector2Subtract(Vector2Subtract(point, offset), halfSize);
+// }
+
 int main(void) {
   InitWindow(1000, 900, "Discrete Fourier Transform");
   SetTargetFPS(120);
 
-  const char *FILE_NAME = "sampled_svgs/love_text.pt";
+  const char *FILE_NAME = "sampled_svgs/swan.pt";
 
   Vector2 maxDrawDimension;
 
@@ -174,10 +179,11 @@ int main(void) {
   // create corresponding epicircles
   // draw epicircles depending on time
 
-  Vector2 displayPointBuffer[1000] = {};
+  #define pointsAbsoluteLength 1000 
+
+  Vector2 *displayPointBuffer = (Vector2*)malloc(pointsAbsoluteLength * sizeof(Vector2));
 
   int currentPointsLength = 0;
-  const int pointsAbsoluteLength = ARRAY_LEN(displayPointBuffer);
 
   int totalFrames = 0;
 
@@ -188,6 +194,8 @@ int main(void) {
   float drawingScale = 1.0f;
 
   float ignoreDistanceThreshold = 200.0f;
+
+  float lineThickness = 3.0f;
 
   Camera2D camera;
   camera.offset = (Vector2){GetScreenWidth() * .5f, GetScreenWidth() * .5f};
@@ -294,7 +302,7 @@ int main(void) {
       // we could potentially optimize using an image
       // live display while drawing the image
       DrawLineStripFromPoints(displayPointBuffer, topLeft, drawingScale,
-                              ignoreDistanceThreshold, currentPointsLength);
+                              ignoreDistanceThreshold, lineThickness, currentPointsLength);
     }
 
     EndMode2D();
@@ -323,6 +331,11 @@ int main(void) {
 
     {
       Rectangle rect = {0, 90, 300, 20};
+      GuiSlider(rect, "", "lineThickness", &lineThickness, 0.1f, 10.0f);
+    }
+
+    {
+      Rectangle rect = {0, 120, 300, 20};
       GuiSlider(rect, "", "ignore Distance Threshold", &ignoreDistanceThreshold,
                 0, 500);
     }
@@ -334,5 +347,7 @@ int main(void) {
 
   free(xEpicircles);
   free(yEpicircles);
+
+  free(displayPointBuffer);
   return 0;
 }

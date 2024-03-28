@@ -8,6 +8,6 @@ int MaxI(int a, int b);
 float Maxf(float a, float b);
 
 void DrawCornerDimensions(Vector2 topLeft, Vector2 bottomRight);
-void DrawLineStripFromPoints(Vector2 *points, Vector2 offset, float scale, float ignoreDistanceThreshold, size_t size);
+void DrawLineStripFromPoints(Vector2 *points, Vector2 offset, float scale, float ignoreDistanceThreshold, float lineThickness, size_t size);
 
 #endif // UTILITIES_H
