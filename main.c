@@ -138,11 +138,6 @@ int LoadDiscreteValuesFromFile(const char *fileName,
 
 void UnloadDiscreteValues(Vector2 *discreteValues) { free(discreteValues); }
 
-// Vector2 CenterPoint(Vector2 point, Vector2 offset, Vector2 size) {
-//   const Vector2 halfSize = Vector2Scale(size, 0.5f);
-//   return Vector2Subtract(Vector2Subtract(point, offset), halfSize);
-// }
-
 int main(void) {
   InitWindow(1000, 900, "Discrete Fourier Transform");
   SetTargetFPS(120);
@@ -168,6 +163,7 @@ int main(void) {
 
   Epicircle *xEpicircles =
       (Epicircle *)malloc(valuesLength * sizeof(Epicircle));
+
   Epicircle *yEpicircles =
       (Epicircle *)malloc(valuesLength * sizeof(Epicircle));
 

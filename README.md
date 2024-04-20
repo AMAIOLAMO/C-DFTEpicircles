@@ -35,3 +35,9 @@ which creates 4 points in sequence, and draws a 1 unit by 1 unit square
 
 ## Custom SVG
 Currently it is not supported yet, but I am thinking of adding such. For now you need to modify the variable `discreteValues` array in `main.c`, to contain all the points of your specified drawing
+
+
+## FUTURE TODO
+1. allow instead to load the `.pt` file by dragging directly in the window
+2. switch to Fast Fourier transform
+3. Refactor Code into a more modular system
